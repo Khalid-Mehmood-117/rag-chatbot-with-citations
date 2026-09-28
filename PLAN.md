@@ -61,6 +61,8 @@ rag-chatbot-with-citations/
 │   ├── tune_threshold.py      # best similarity per question, for the refusal threshold
 │   ├── sample_docs/           # the public-domain PDFs the questions are about
 │   └── results.md             # latest eval output, committed for the README
+├── docs/
+│   └── screenshots/           # UI screenshots used in the README
 ├── docker-compose.yml         # postgres(pgvector) + backend + frontend
 ├── .env.example
 ├── .gitignore

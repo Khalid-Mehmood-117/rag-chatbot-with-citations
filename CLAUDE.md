@@ -57,4 +57,19 @@ Do this without being asked. A milestone is not complete until this is done.
   overlap with the question plus the answer, capped at 300 characters, instead of the first 200
   characters of the chunk.
 - Git identity fixed: all commits on main rewritten to Khalid Mehmood and force-pushed.
-- Next: M3 Next.js UI (upload dropzone, document list, chat with citation chips, refusal styling).
+- Done: M3 frontend (2026-09-28). Next.js 16 App Router, TypeScript, Tailwind 4 in frontend/.
+  lib/api.ts is the typed client (XMLHttpRequest for upload progress, fetch otherwise, one ApiError type).
+  Components: UploadDropzone (drag and drop, progress bar, processing state, page and chunk counts),
+  DocumentList (name, pages, uploaded time), ChatWindow, MessageBubble (user, answer, refusal, error
+  styles), CitationList (chips with document and page, click expands the snippet). Backend URL from
+  NEXT_PUBLIC_API_URL with http://localhost:8000 default. Light theme only, no dev indicator.
+- M3 verification: backend and frontend run locally, full flow driven in headless Chrome with Playwright:
+  upload of the DOI handbook showed 33 pages and 33 chunks, the vacation question answered with a
+  page 7 chip whose snippet is the accrual table line, the World Cup question rendered the muted
+  "Not in documents" refusal. Zero console errors and zero page errors. tsc and eslint clean.
+  Screenshots in docs/screenshots (01-upload, 02-answer-with-citation, 03-refusal).
+- Ops note: Docker Desktop failed to start mid-session because of stale Unix socket reparse points in
+  %LOCALAPPDATA%\Docker
+un. Fix that worked: quit Docker Desktop, rename the run folder, relaunch.
+- Next: M4 docker-compose for db + backend + frontend, README with setup, architecture diagram,
+  eval results, screenshots and demo GIF.
