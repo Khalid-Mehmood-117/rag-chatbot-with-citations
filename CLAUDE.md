@@ -69,7 +69,7 @@ Do this without being asked. A milestone is not complete until this is done.
   "Not in documents" refusal. Zero console errors and zero page errors. tsc and eslint clean.
   Screenshots in docs/screenshots (01-upload, 02-answer-with-citation, 03-refusal).
 - Ops note: Docker Desktop failed to start mid-session because of stale Unix socket reparse points in
-  %LOCALAPPDATA%\Docker
-un. Fix that worked: quit Docker Desktop, rename the run folder, relaunch.
+  the Docker run folder under %LOCALAPPDATA%. Fix that worked: quit Docker Desktop, rename the run
+  folder, relaunch.
 - Next: M4 docker-compose for db + backend + frontend, README with setup, architecture diagram,
   eval results, screenshots and demo GIF.
