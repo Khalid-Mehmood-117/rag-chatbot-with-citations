@@ -33,4 +33,15 @@ Do this without being asked. A milestone is not complete until this is done.
 ## Status
 - Environment verified: Python 3.13.5, Docker 29.7.2, Node 24.14.0, npm 11.9.0, Git 2.55.0
 - Done: PLAN.md, .env.example, .gitignore, CLAUDE.md
-- Next: M1 backend (upload, ask, list documents, citations, refusal rule, pytest)
+- Done: M1 backend (2026-09-28). FastAPI app in backend/app with POST /documents, GET /documents,
+  POST /ask, GET /health. pgvector Postgres runs from docker-compose.yml (db service only for now).
+  Sample document: eval/sample_docs/doi_absence_and_leave_handbook.pdf (US DOI, public domain, 33 pages).
+- M1 verification: server run locally with uvicorn against the Docker database and a real OpenAI key.
+  Upload curl returned 33 pages and 33 chunks. Ask curl "How many vacation days do new employees get?"
+  returned the 13 days per year answer citing page 7. FMLA question cited page 6. An off-topic question
+  returned the exact refusal string with refused=true and no citations. pytest: 21 passed (OpenAI and
+  database faked).
+- Design notes from M1: chunks are 600 word windows with 75 word overlap (no tokenizer dependency),
+  similarity threshold 0.25 kept as the starting value for M2 tuning, system prompt tells the model that
+  question wording may differ from source wording (needed for "vacation" vs "annual leave").
+- Next: M2 evaluation (eval/questions.json with 20 questions, eval/run_eval.py, eval/results.md).

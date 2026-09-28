@@ -19,7 +19,7 @@ documents don't contain the answer, the bot says so instead of guessing.
 ### Request flow
 
 ```
-Upload:  PDF --> extract text per page --> chunk (~800 tokens, 100 overlap)
+Upload:  PDF --> extract text per page --> chunk (600 words ~ 800 tokens, 75 words overlap)
              --> embed each chunk --> INSERT (document_id, page, text, embedding)
 
 Ask:     question --> embed --> top-k cosine search in pgvector (k=5)
@@ -35,6 +35,7 @@ rag-chatbot-with-citations/
 │   ├── app/
 │   │   ├── main.py            # FastAPI app, CORS, router registration
 │   │   ├── config.py          # Settings from env (OPENAI_API_KEY, DATABASE_URL)
+│   │   ├── openai_client.py   # Shared AsyncOpenAI client (a FastAPI dependency, faked in tests)
 │   │   ├── db.py              # SQLAlchemy async engine, pgvector extension, table creation
 │   │   ├── models.py          # documents + chunks tables
 │   │   ├── schemas.py         # Pydantic request/response models
@@ -45,6 +46,7 @@ rag-chatbot-with-citations/
 │   │       ├── documents.py   # POST /documents, GET /documents
 │   │       └── ask.py         # POST /ask
 │   ├── tests/                 # pytest: chunking, refusal rule, endpoints (mocked OpenAI)
+│   ├── pytest.ini
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── frontend/
@@ -96,8 +98,9 @@ curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" \
 
 ## 4. How citations work
 
-1. **At ingest**, `pypdf` yields text page by page. Each chunk is created *within* a page
-   (never across pages), so every chunk row stores `document_id`, `document_name`,
+1. **At ingest**, `pypdf` yields text page by page. Chunks are word windows (600 words with a
+   75 word overlap, roughly 800 tokens and 100 tokens) so no tokenizer dependency is needed.
+   Each chunk is created *within* a page (never across pages), so every chunk row stores `document_id`, `document_name`,
    `page_number`, `chunk_index`, `text`, `embedding`.
 2. **At query time**, the top-k chunks are numbered `[1]..[k]` and placed in the prompt as
    `[1] (handbook.pdf, p.12) <text>`.
