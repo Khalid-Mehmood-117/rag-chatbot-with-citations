@@ -22,6 +22,7 @@ Khalid Mehmood, AI Engineer. Working with Claude Code as the daily coding partne
 - No em dashes in any file, README or comment.
 - Prefer small, readable functions over clever code. This repo is read by clients.
 - Commit after every verified milestone with a clear message, then push to origin main.
+- Progress visibility: for any task with more than 3 steps, first write a numbered todo list of the steps, then mark each one done as you finish it and post a one-line note ("Step 2 of 6 done: pgvector container up"). Never go silent for a long stretch; if a step is taking longer than expected, say what is slow and why.
 
 ## Self-maintenance (mandatory)
 At the end of every milestone, before telling the owner it is done:
