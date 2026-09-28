@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     chunk_overlap_words: int = 75
 
     top_k: int = 5
-    similarity_threshold: float = 0.25
+    similarity_threshold: float = 0.35
 
     model_config = SettingsConfigDict(
         env_file=(REPO_ROOT / ".env", ".env"),

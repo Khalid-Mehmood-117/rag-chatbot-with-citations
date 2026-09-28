@@ -9,7 +9,7 @@ from app.retrieval import RetrievedChunk
 from app.schemas import AskResponse, Citation
 
 REFUSAL = "I don't have that in the documents"
-SNIPPET_CHARS = 200
+SNIPPET_CHARS = 300
 
 SYSTEM_PROMPT = f"""You answer questions using only the numbered sources provided.
 Rules:
@@ -21,6 +21,12 @@ Rules:
 5. Keep the answer short and direct."""
 
 CITATION_PATTERN = re.compile(r"\[(\d+)\]")
+SENTENCE_BOUNDARY = re.compile(r"(?<=[.!?])\s+")
+STOPWORDS = {
+    "the", "and", "for", "are", "does", "how", "what", "when", "who", "why", "which", "can",
+    "may", "with", "from", "that", "this", "into", "have", "has", "get", "many", "much",
+    "any", "per", "their", "there", "they", "will", "not", "his", "her", "each", "under",
+}
 
 
 def format_sources(chunks: list[RetrievedChunk]) -> str:
@@ -48,21 +54,47 @@ def parse_cited_indexes(answer: str, source_count: int) -> list[int]:
     return cited
 
 
-def make_snippet(text: str) -> str:
+def split_sentences(text: str) -> list[str]:
     collapsed = " ".join(text.split())
-    if len(collapsed) <= SNIPPET_CHARS:
-        return collapsed
-    return collapsed[:SNIPPET_CHARS].rstrip() + "..."
+    return [s for s in SENTENCE_BOUNDARY.split(collapsed) if s]
 
 
-def build_citations(answer: str, chunks: list[RetrievedChunk]) -> list[Citation]:
+def keywords(text: str) -> set[str]:
+    """Lowercase words with a trailing s removed, so 'employees' matches 'employee'."""
+    words = re.findall(r"[a-z0-9]+", text.lower())
+    return {w.rstrip("s") for w in words if len(w) > 2 and w not in STOPWORDS}
+
+
+def truncate(text: str) -> str:
+    if len(text) <= SNIPPET_CHARS:
+        return text
+    return text[:SNIPPET_CHARS].rstrip() + "..."
+
+
+def make_snippet(text: str, question: str, answer: str = "") -> str:
+    """The sentence of the chunk that best matches the question.
+
+    The answer's words are counted too, because the answer repeats the source wording even
+    when the question does not (for example "vacation" versus "annual leave").
+    """
+    sentences = split_sentences(text)
+    if not sentences:
+        return ""
+    target = keywords(question) | keywords(answer)
+    best = max(sentences, key=lambda s: len(keywords(s) & target))
+    if not keywords(best) & target:
+        best = sentences[0]
+    return truncate(best)
+
+
+def build_citations(answer: str, chunks: list[RetrievedChunk], question: str) -> list[Citation]:
     """Only the chunks the model actually cited are returned."""
     return [
         Citation(
             index=index,
             document=chunks[index - 1].document_name,
             page=chunks[index - 1].page_number,
-            snippet=make_snippet(chunks[index - 1].text),
+            snippet=make_snippet(chunks[index - 1].text, question, answer),
         )
         for index in parse_cited_indexes(answer, len(chunks))
     ]
@@ -92,7 +124,7 @@ async def answer_question(
         return refusal_response()
 
     answer = await call_llm(client, build_messages(question, chunks))
-    citations = build_citations(answer, chunks)
+    citations = build_citations(answer, chunks, question)
     if is_refusal(answer) or not citations:
         return refusal_response()
     return AskResponse(answer=answer, citations=citations, refused=False)

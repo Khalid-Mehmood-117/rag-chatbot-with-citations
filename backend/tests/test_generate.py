@@ -1,6 +1,21 @@
-from app.generate import REFUSAL, answer_question, build_citations, build_messages, parse_cited_indexes
+from app.generate import (
+    REFUSAL,
+    SNIPPET_CHARS,
+    answer_question,
+    build_citations,
+    build_messages,
+    make_snippet,
+    parse_cited_indexes,
+)
 from app.retrieval import RetrievedChunk
 from tests.fakes import FakeOpenAI
+
+PAGE_TEXT = (
+    "Supervisors decide when leave may be approved. "
+    "Employees earn annual leave each pay period based on years of creditable service. "
+    "Employees who donate blood may be excused from duty for up to 4 hours. "
+    "Restored leave must be used within two years."
+)
 
 
 def make_chunks(similarity: float = 0.8) -> list[RetrievedChunk]:
@@ -15,11 +30,40 @@ def test_parse_cited_indexes_dedupes_and_ignores_out_of_range():
 
 
 def test_build_citations_returns_only_cited_chunks():
-    citations = build_citations("Thirteen days [1].", make_chunks())
+    citations = build_citations("Thirteen days [1].", make_chunks(), "How much annual leave?")
     assert len(citations) == 1
     assert citations[0].document == "handbook.pdf"
     assert citations[0].page == 12
     assert "13 days" in citations[0].snippet
+
+
+def test_snippet_is_the_sentence_that_best_matches_the_question():
+    snippet = make_snippet(PAGE_TEXT, "How long can an employee be excused to donate blood?")
+    assert snippet == "Employees who donate blood may be excused from duty for up to 4 hours."
+
+
+def test_snippet_matches_plural_and_singular_words():
+    snippet = make_snippet(PAGE_TEXT, "When must restored leave be used?")
+    assert snippet == "Restored leave must be used within two years."
+
+
+def test_snippet_uses_answer_words_when_question_wording_differs():
+    question = "How many vacation days do new employees get?"
+    answer = "Employees earn annual leave each pay period based on creditable service [1]."
+    snippet = make_snippet(PAGE_TEXT, question, answer)
+    assert snippet == "Employees earn annual leave each pay period based on years of creditable service."
+
+
+def test_snippet_falls_back_to_first_sentence_when_nothing_matches():
+    snippet = make_snippet(PAGE_TEXT, "Who won the World Cup?")
+    assert snippet == "Supervisors decide when leave may be approved."
+
+
+def test_snippet_is_truncated():
+    long_sentence = "word " * 200
+    snippet = make_snippet(long_sentence, "word")
+    assert len(snippet) <= SNIPPET_CHARS + 3
+    assert snippet.endswith("...")
 
 
 def test_build_messages_numbers_sources_with_document_and_page():

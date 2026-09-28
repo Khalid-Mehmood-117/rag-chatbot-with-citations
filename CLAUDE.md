@@ -44,4 +44,17 @@ Do this without being asked. A milestone is not complete until this is done.
 - Design notes from M1: chunks are 600 word windows with 75 word overlap (no tokenizer dependency),
   similarity threshold 0.25 kept as the starting value for M2 tuning, system prompt tells the model that
   question wording may differ from source wording (needed for "vacation" vs "annual leave").
-- Next: M2 evaluation (eval/questions.json with 20 questions, eval/run_eval.py, eval/results.md).
+- Done: M2 evaluation (2026-09-28). eval/questions.json has 20 questions on the DOI handbook
+  (15 answerable with expected page, 5 unanswerable). eval/run_eval.py calls POST /ask for each,
+  judges answers with gpt-4o-mini, checks the expected page appears in the citations and writes
+  eval/results.md. eval/tune_threshold.py prints the best retrieval similarity per question.
+- M2 verification: run_eval.py against the local backend with a real key. Result: 20/20 answers
+  correct, 15/15 citations on the expected page, 5/5 refusals, 0 false refusals. Same result at
+  threshold 0.25 and 0.35. pytest: 26 passed.
+- Design changes in M2: SIMILARITY_THRESHOLD raised from 0.25 to 0.35 (answerable questions scored
+  0.45 to 0.75, unanswerable 0.03 to 0.49, so the threshold is a cheap pre-filter and the prompt
+  layer does the real refusing). Citation snippet is now the chunk sentence with the most keyword
+  overlap with the question plus the answer, capped at 300 characters, instead of the first 200
+  characters of the chunk.
+- Git identity fixed: all commits on main rewritten to Khalid Mehmood and force-pushed.
+- Next: M3 Next.js UI (upload dropzone, document list, chat with citation chips, refusal styling).

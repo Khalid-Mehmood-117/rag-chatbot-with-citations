@@ -1,0 +1,162 @@
+[
+  {
+    "id": 1,
+    "question": "How many vacation days do new employees get?",
+    "expected_answer": "Employees with less than 3 years of creditable service earn 4 hours per pay period, which is 13 days per year.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 7,
+    "type": "answerable"
+  },
+  {
+    "id": 2,
+    "question": "How much annual leave can an employee working in the United States carry over into the next leave year?",
+    "expected_answer": "A maximum of 240 hours.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 7,
+    "type": "answerable"
+  },
+  {
+    "id": 3,
+    "question": "How many hours of sick leave do most employees earn each pay period?",
+    "expected_answer": "4 hours of sick leave each pay period, regardless of years of service.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 11,
+    "type": "answerable"
+  },
+  {
+    "id": 4,
+    "question": "How much sick leave can an employee use each leave year to care for a family member with a serious health condition?",
+    "expected_answer": "Up to 480 hours (12 weeks) per leave year.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 11,
+    "type": "answerable"
+  },
+  {
+    "id": 5,
+    "question": "Can an employee use sick leave to take care of an ill pet?",
+    "expected_answer": "No. Annual leave or leave without pay must be used for that purpose.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 12,
+    "type": "answerable"
+  },
+  {
+    "id": 6,
+    "question": "What is the maximum amount of sick leave a supervisor may advance to a full-time employee?",
+    "expected_answer": "A maximum of 30 days, or 240 hours.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 12,
+    "type": "answerable"
+  },
+  {
+    "id": 7,
+    "question": "How many days of military funeral leave may an employee receive?",
+    "expected_answer": "No more than three days.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 13,
+    "type": "answerable"
+  },
+  {
+    "id": 8,
+    "question": "For how long can an employee who enters active military duty continue their FEHB enrollment?",
+    "expected_answer": "Up to 24 months.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 13,
+    "type": "answerable"
+  },
+  {
+    "id": 9,
+    "question": "How many weeks of unpaid leave is an employee entitled to under the Family and Medical Leave Act during a 12-month period?",
+    "expected_answer": "12 administrative workweeks.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 15,
+    "type": "answerable"
+  },
+  {
+    "id": 10,
+    "question": "How many months of federal service must an employee have completed to be eligible under Title II of FMLA?",
+    "expected_answer": "12 months of federal government service.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 16,
+    "type": "answerable"
+  },
+  {
+    "id": 11,
+    "question": "How many weeks of FMLA leave can an employee take to care for a service member with a serious injury incurred on active duty?",
+    "expected_answer": "Up to 26 weeks during a single 12-month period.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 16,
+    "type": "answerable"
+  },
+  {
+    "id": 12,
+    "question": "How long can an employee be excused from duty to donate blood?",
+    "expected_answer": "Up to 4 hours.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 25,
+    "type": "answerable"
+  },
+  {
+    "id": 13,
+    "question": "How many days of excused absence per calendar year may an employee use to serve as an organ donor?",
+    "expected_answer": "Up to 30 days per calendar year.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 26,
+    "type": "answerable"
+  },
+  {
+    "id": 14,
+    "question": "How many days of excused absence do employees returning from military active duty receive?",
+    "expected_answer": "5 work days of excused absence without charge to leave.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 26,
+    "type": "answerable"
+  },
+  {
+    "id": 15,
+    "question": "Within how many work days must the SHRO notify an applicant whether their Voluntary Leave Transfer Program application was approved?",
+    "expected_answer": "Within 10 work days after the application was received.",
+    "expected_document": "doi_absence_and_leave_handbook.pdf",
+    "expected_page": 20,
+    "type": "answerable"
+  },
+  {
+    "id": 16,
+    "question": "What is the annual salary of a GS-7 employee at the Department of the Interior?",
+    "expected_answer": "I don't have that in the documents",
+    "expected_document": null,
+    "expected_page": null,
+    "type": "unanswerable"
+  },
+  {
+    "id": 17,
+    "question": "What is the dress code for Department of the Interior employees?",
+    "expected_answer": "I don't have that in the documents",
+    "expected_document": null,
+    "expected_page": null,
+    "type": "unanswerable"
+  },
+  {
+    "id": 18,
+    "question": "How many paid federal holidays are there each year?",
+    "expected_answer": "I don't have that in the documents",
+    "expected_document": null,
+    "expected_page": null,
+    "type": "unanswerable"
+  },
+  {
+    "id": 19,
+    "question": "What is the daily per diem rate for official travel to Washington, DC?",
+    "expected_answer": "I don't have that in the documents",
+    "expected_document": null,
+    "expected_page": null,
+    "type": "unanswerable"
+  },
+  {
+    "id": 20,
+    "question": "Who won the 1998 FIFA World Cup?",
+    "expected_answer": "I don't have that in the documents",
+    "expected_document": null,
+    "expected_page": null,
+    "type": "unanswerable"
+  }
+]

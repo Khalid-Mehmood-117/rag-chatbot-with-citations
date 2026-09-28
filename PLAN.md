@@ -58,6 +58,7 @@ rag-chatbot-with-citations/
 ├── eval/
 │   ├── questions.json         # 20 questions + expected answers + expected source
 │   ├── run_eval.py            # runs questions against /ask, prints accuracy table
+│   ├── tune_threshold.py      # best similarity per question, for the refusal threshold
 │   ├── sample_docs/           # the public-domain PDFs the questions are about
 │   └── results.md             # latest eval output, committed for the README
 ├── docker-compose.yml         # postgres(pgvector) + backend + frontend
@@ -107,7 +108,10 @@ curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" \
 3. The system prompt instructs the model to answer **only** from the numbered sources and to
    append the bracket number(s) it used after each claim.
 4. The backend parses the `[n]` markers out of the answer and returns only the cited chunks as
-   `citations` (document name, page, short snippet). Uncited retrieved chunks are dropped.
+   `citations` (document name, page, snippet). Uncited retrieved chunks are dropped. The snippet
+   is the sentence of the chunk that shares the most keywords with the question (plural and
+   singular forms match), capped at 300 characters, so the chip shows the relevant line rather
+   than the top of the page.
 5. The UI renders citations as clickable chips under the answer showing `document · page N`.
 
 ## 5. Refusal rule
@@ -116,8 +120,12 @@ The bot must not guess. Two layers enforce this:
 
 - **Prompt layer.** The system prompt says: *"If the sources do not contain the answer, reply
   exactly: `I don't have that in the documents`."*
-- **Code layer.** Before calling the LLM, if the best cosine similarity is below a threshold
-  (start at `0.25`, tune with the eval set), skip the LLM and return the refusal directly.
+- **Code layer.** Before calling the LLM, if the best cosine similarity is below a threshold,
+  skip the LLM and return the refusal directly. Tuned on the eval set with `eval/tune_threshold.py`:
+  answerable questions scored 0.45 to 0.75 and unanswerable ones 0.03 to 0.49, so the groups
+  overlap and the threshold cannot separate them on its own. It is set to `0.35`, which catches
+  clearly off-topic questions cheaply and leaves a margin below the weakest answerable question.
+  The prompt layer handles the rest.
   After the LLM call, if the answer contains the refusal sentence or cites no sources, the
   response is normalised to `answer = "I don't have that in the documents"`,
   `citations = []`, `refused = true`.
@@ -133,6 +141,8 @@ rate is measured, not assumed.
     "expected_page": 12, "type": "answerable" }
   ```
   Roughly 15 `answerable` and 5 `unanswerable` (expected answer is the refusal string).
+- `eval/tune_threshold.py`: prints the best retrieval similarity per question, grouped by type,
+  to pick the refusal threshold.
 - `eval/run_eval.py`: for each question calls `POST /ask`, then scores:
   - **Answer correctness**: `gpt-4o-mini` as judge, asked "does the answer convey the expected
     answer? yes/no" (`temperature=0`). For `unanswerable` items, correct means the bot refused.
