@@ -1,5 +1,8 @@
 # PLAN.md: RAG Chatbot with Citations
 
+**Status: complete.** All four milestones (M1 to M4) are done and verified. See the Status section of
+CLAUDE.md for what was verified and how, and eval/results.md for the latest evaluation numbers.
+
 A portfolio-grade Retrieval-Augmented Generation (RAG) chatbot. Users upload PDFs, ask
 questions, and get answers grounded in those PDFs with document-and-page citations. If the
 documents don't contain the answer, the bot says so instead of guessing.
@@ -58,7 +61,6 @@ rag-chatbot-with-citations/
 ├── eval/
 │   ├── questions.json         # 20 questions + expected answers + expected source
 │   ├── run_eval.py            # runs questions against /ask, prints accuracy table
-│   ├── tune_threshold.py      # best similarity per question, for the refusal threshold
 │   ├── sample_docs/           # the public-domain PDFs the questions are about
 │   └── results.md             # latest eval output, committed for the README
 ├── docs/
@@ -124,11 +126,13 @@ The bot must not guess. Two layers enforce this:
 - **Prompt layer.** The system prompt says: *"If the sources do not contain the answer, reply
   exactly: `I don't have that in the documents`."*
 - **Code layer.** Before calling the LLM, if the best cosine similarity is below a threshold,
-  skip the LLM and return the refusal directly. Tuned on the eval set with `eval/tune_threshold.py`:
-  answerable questions scored 0.45 to 0.75 and unanswerable ones 0.03 to 0.49, so the groups
-  overlap and the threshold cannot separate them on its own. It is set to `0.35`, which catches
-  clearly off-topic questions cheaply and leaves a margin below the weakest answerable question.
-  The prompt layer handles the rest.
+  skip the LLM and return the refusal directly. Tuned once with a throwaway script that printed the
+  best retrieval similarity per eval question (removed after use). On the 30 question set, answerable
+  questions scored 0.45 to 0.75 and unanswerable ones 0.03 to 0.60. Near-topic unanswerable questions
+  (other agencies' leave rules, paid parental leave) score higher than some answerable ones, so the
+  threshold cannot separate the groups. It is set to `0.35`, which catches clearly off-topic questions
+  cheaply and leaves a margin below the weakest answerable question. The prompt layer does the real
+  refusing and scored 9 of 9 on the eval set.
   After the LLM call, if the answer contains the refusal sentence or cites no sources, the
   response is normalised to `answer = "I don't have that in the documents"`,
   `citations = []`, `refused = true`.
@@ -138,18 +142,19 @@ rate is measured, not assumed.
 
 ## 6. Evaluation
 
-- `eval/questions.json`: 20 items:
+- `eval/questions.json`: 30 items (20 direct, 3 paraphrased, 3 needing two pages, 4 unanswerable
+  but close to the handbook topic):
   ```json
   { "id": 1, "question": "...", "expected_answer": "...", "expected_document": "handbook.pdf",
-    "expected_page": 12, "type": "answerable" }
+    "expected_pages": [12], "type": "answerable", "group": "base" }
   ```
-  Roughly 15 `answerable` and 5 `unanswerable` (expected answer is the refusal string).
-- `eval/tune_threshold.py`: prints the best retrieval similarity per question, grouped by type,
-  to pick the refusal threshold.
+  21 `answerable` and 9 `unanswerable` (expected answer is the refusal string). Two-page questions
+  list both pages and need both cited to count.
 - `eval/run_eval.py`: for each question calls `POST /ask`, then scores:
-  - **Answer correctness**: `gpt-4o-mini` as judge, asked "does the answer convey the expected
-    answer? yes/no" (`temperature=0`). For `unanswerable` items, correct means the bot refused.
-  - **Citation accuracy**: expected document and page appear in the returned citations.
+  - **Answer correctness**: `gpt-4o-mini` as judge (`temperature=0`), answering yes only if every
+    fact in the expected answer is present. A lenient "conveys the answer" prompt was found to pass
+    partial answers and was replaced. For `unanswerable` items, correct means the bot refused.
+  - **Citation accuracy**: every expected page of the expected document appears in the citations.
   - Prints a per-question table plus overall **answer accuracy**, **citation accuracy** and
     **refusal accuracy**, and writes `eval/results.md`.
 - Target for the README: >= 85% answer accuracy, >= 80% citation accuracy, 5/5 refusals.

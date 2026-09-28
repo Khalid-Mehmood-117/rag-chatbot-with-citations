@@ -48,7 +48,7 @@ Do this without being asked. A milestone is not complete until this is done.
 - Done: M2 evaluation (2026-09-28). eval/questions.json has 20 questions on the DOI handbook
   (15 answerable with expected page, 5 unanswerable). eval/run_eval.py calls POST /ask for each,
   judges answers with gpt-4o-mini, checks the expected page appears in the citations and writes
-  eval/results.md. eval/tune_threshold.py prints the best retrieval similarity per question.
+  eval/results.md. A throwaway tune_threshold.py printed the best similarity per question (removed in M4).
 - M2 verification: run_eval.py against the local backend with a real key. Result: 20/20 answers
   correct, 15/15 citations on the expected page, 5/5 refusals, 0 false refusals. Same result at
   threshold 0.25 and 0.35. pytest: 26 passed.
@@ -72,17 +72,22 @@ Do this without being asked. A milestone is not complete until this is done.
 - Ops note: Docker Desktop failed to start mid-session because of stale Unix socket reparse points in
   the Docker run folder under %LOCALAPPDATA%. Fix that worked: quit Docker Desktop, rename the run
   folder, relaunch.
-- Done: M4 packaging and README (2026-09-28). docker-compose.yml runs db, backend and frontend with
-  health-checked startup order. frontend/Dockerfile is a two-stage standalone Next.js build with
-  NEXT_PUBLIC_API_URL as a build arg. FRONTEND_PORT and CORS_ORIGINS overrides for machines where 3000
-  is taken (backend CORS origins are now a setting). README has a Mermaid architecture diagram, quick
-  start, API examples with real JSON, citation and refusal design, eval results, screenshots and
-  docs/demo.gif (14 frames from Playwright, assembled with Pillow, 341 KB).
-- M4 verification: docker compose up --build built both images and started all three containers.
-  Through the containerized backend: upload returned 33 pages and 33 chunks, the vacation question
-  cited page 7, CORS preflight returned the frontend origin. The frontend container served the UI and
-  the full browser flow (upload, answer with citation, refusal) was recorded from it for the GIF.
-  On this machine port 3000 is held by a Grafana container from another project, so the frontend was
-  verified on FRONTEND_PORT=3001 with CORS_ORIGINS=http://localhost:3001. pytest: 27 passed.
-- All four milestones are complete. Possible follow-ups: harder eval paraphrases written by someone
-  other than the author, document deletion, per-document filtering in the UI, streaming answers.
+- Done: M4 packaging, hardened eval and README (2026-09-28). docker-compose.yml runs db, backend and
+  frontend with health-checked startup order; frontend/Dockerfile is a two-stage standalone Next.js
+  build; FRONTEND_PORT and CORS_ORIGINS overrides for machines where 3000 is taken. Eval hardened to
+  30 questions (20 direct, 3 paraphrased, 3 two-page, 4 near-topic unanswerable). run_eval.py scores
+  all expected pages and reports per group; the judge prompt was tightened to require every expected
+  fact after the lenient version passed two partial answers. README rewritten for a hiring client
+  (problem, solution, architecture, stack, eval, citations and refusal, setup, design, extensions,
+  author line). docs/demo.gif re-recorded from the compose stack (308 KB).
+- M4 verification: docker compose down -v, then docker compose up --build from scratch. Browser flow
+  (upload, answer with citation expanded, refusal) ran against the fresh stack with zero console or
+  page errors. Eval against the compose backend: 29/30 answers, 20/21 answerable, 19/21 citations,
+  9/9 refusals, 0 false refusals. The misses are two-page questions where the second page was not in
+  the top 5 retrieved chunks, documented in the README as a retrieval limitation. pytest: 27 passed.
+  Secret scan: git grep for "sk-" and key patterns finds only the placeholder in .env.example.
+  On this machine port 3000 is held by a Grafana container from another project, so the frontend
+  was verified on FRONTEND_PORT=3001 via the local .env.
+- Project status: COMPLETE. All four milestones delivered, verified and pushed to origin main.
+- Possible follow-ups: query decomposition or larger top_k for multi-page questions, eval questions
+  written by someone other than the author, document deletion, per-document filtering in the UI.

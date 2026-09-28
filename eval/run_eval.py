@@ -6,7 +6,8 @@ Usage (from the repo root, with the backend running and the sample PDF uploaded)
 Scoring:
   - Answer correctness: gpt-4o-mini judges whether the bot's answer conveys the expected answer.
     For unanswerable questions, correct means the bot refused.
-  - Citation accuracy (answerable only): expected document and page appear in the citations.
+  - Citation accuracy (answerable only): every expected page of the expected document appears in
+    the citations. Two-page questions need both pages.
   - Refusal accuracy: share of unanswerable questions that were refused.
 """
 
@@ -29,7 +30,9 @@ Question: {question}
 Expected answer: {expected}
 System answer: {answer}
 
-Does the system answer convey the same facts as the expected answer? Extra correct detail is fine.
+Answer yes only if every fact in the expected answer is present in the system answer with the same
+meaning. If any expected fact is missing, contradicted or replaced by a different fact, answer no.
+Extra detail beyond the expected answer is fine.
 Reply with exactly one word: yes or no."""
 
 
@@ -37,6 +40,7 @@ Reply with exactly one word: yes or no."""
 class Result:
     id: int
     type: str
+    group: str
     question: str
     answer: str
     refused: bool
@@ -60,10 +64,9 @@ def judge(openai_client: OpenAI, question: str, expected: str, answer: str) -> b
 
 
 def citation_matches(item: dict, citations: list[dict]) -> bool:
-    return any(
-        c["document"] == item["expected_document"] and c["page"] == item["expected_page"]
-        for c in citations
-    )
+    """True when every expected page of the expected document was cited."""
+    cited_pages = {c["page"] for c in citations if c["document"] == item["expected_document"]}
+    return all(page in cited_pages for page in item["expected_pages"])
 
 
 def evaluate_item(item: dict, client: httpx.Client, openai_client: OpenAI) -> Result:
@@ -81,6 +84,7 @@ def evaluate_item(item: dict, client: httpx.Client, openai_client: OpenAI) -> Re
     return Result(
         id=item["id"],
         type=item["type"],
+        group=item.get("group", "base"),
         question=item["question"],
         answer=response["answer"],
         refused=refused,
@@ -100,12 +104,28 @@ def summarise(results: list[Result]) -> dict[str, str]:
     answerable = [r for r in results if r.type == "answerable"]
     unanswerable = [r for r in results if r.type == "unanswerable"]
     return {
-        "Answer accuracy (all 20)": percent(sum(r.correct for r in results), len(results)),
+        f"Answer accuracy (all {len(results)})": percent(sum(r.correct for r in results), len(results)),
         "Answer accuracy (answerable)": percent(sum(r.correct for r in answerable), len(answerable)),
         "Citation accuracy (answerable)": percent(sum(bool(r.citation_ok) for r in answerable), len(answerable)),
         "Refusal accuracy (unanswerable)": percent(sum(r.refused for r in unanswerable), len(unanswerable)),
         "False refusals (answerable)": f"{sum(r.refused for r in answerable)} of {len(answerable)}",
     }
+
+
+def summarise_by_group(results: list[Result]) -> list[tuple[str, str, str]]:
+    """(group, description, correct count) rows in a fixed order."""
+    descriptions = {
+        "base": "Base set, direct questions",
+        "paraphrase": "Paraphrased wording",
+        "two-page": "Needs two pages",
+        "near-topic": "Unanswerable, close to the handbook topic",
+    }
+    rows = []
+    for group, description in descriptions.items():
+        members = [r for r in results if r.group == group]
+        if members:
+            rows.append((group, description, f"{sum(r.correct for r in members)} of {len(members)}"))
+    return rows
 
 
 def mark(value: bool | None) -> str:
@@ -115,12 +135,14 @@ def mark(value: bool | None) -> str:
 
 
 def render_markdown(results: list[Result], summary: dict[str, str], sample_doc: str) -> str:
+    answerable = sum(r.type == "answerable" for r in results)
+    unanswerable = len(results) - answerable
     lines = [
         "# Evaluation results",
         "",
-        f"Run on {date.today().isoformat()} against `{sample_doc}` with 20 questions "
-        "(15 answerable, 5 unanswerable). Answers are judged by gpt-4o-mini, citations are "
-        "checked against the expected page.",
+        f"Run on {date.today().isoformat()} against `{sample_doc}` with {len(results)} questions "
+        f"({answerable} answerable, {unanswerable} unanswerable). Answers are judged by gpt-4o-mini, "
+        "citations are checked against the expected pages (two-page questions need both).",
         "",
         "## Summary",
         "",
@@ -128,17 +150,19 @@ def render_markdown(results: list[Result], summary: dict[str, str], sample_doc: 
         "|---|---|",
     ]
     lines += [f"| {name} | {value} |" for name, value in summary.items()]
+    lines += ["", "## By question group", "", "| Group | Description | Correct |", "|---|---|---|"]
+    lines += [f"| {g} | {d} | {c} |" for g, d, c in summarise_by_group(results)]
     lines += [
         "",
         "## Per question",
         "",
-        "| # | Type | Question | Correct | Citation | Refused | Pages cited |",
-        "|---|---|---|---|---|---|---|",
+        "| # | Group | Type | Question | Correct | Citation | Refused | Pages cited |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for r in results:
         pages = ", ".join(str(p) for p in r.cited_pages) or "-"
         lines.append(
-            f"| {r.id} | {r.type} | {r.question} | {mark(r.correct)} | {mark(r.citation_ok)} | "
+            f"| {r.id} | {r.group} | {r.type} | {r.question} | {mark(r.correct)} | {mark(r.citation_ok)} | "
             f"{mark(r.refused)} | {pages} |"
         )
     lines.append("")
@@ -146,13 +170,15 @@ def render_markdown(results: list[Result], summary: dict[str, str], sample_doc: 
 
 
 def print_table(results: list[Result], summary: dict[str, str]) -> None:
-    print(f"{'#':>2}  {'type':<12} {'correct':<8} {'citation':<9} {'refused':<8} pages")
+    print(f"{'#':>2}  {'group':<11} {'type':<12} {'correct':<8} {'citation':<9} {'refused':<8} pages")
     for r in results:
         pages = ",".join(str(p) for p in r.cited_pages) or "-"
-        print(f"{r.id:>2}  {r.type:<12} {mark(r.correct):<8} {mark(r.citation_ok):<9} {mark(r.refused):<8} {pages}")
+        print(f"{r.id:>2}  {r.group:<11} {r.type:<12} {mark(r.correct):<8} {mark(r.citation_ok):<9} {mark(r.refused):<8} {pages}")
     print()
     for name, value in summary.items():
         print(f"{name}: {value}")
+    for group, description, count in summarise_by_group(results):
+        print(f"{description}: {count}")
 
 
 def main() -> None:
