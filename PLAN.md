@@ -62,6 +62,7 @@ rag-chatbot-with-citations/
 │   ├── sample_docs/           # the public-domain PDFs the questions are about
 │   └── results.md             # latest eval output, committed for the README
 ├── docs/
+│   ├── demo.gif               # recorded UI flow used in the README
 │   └── screenshots/           # UI screenshots used in the README
 ├── docker-compose.yml         # postgres(pgvector) + backend + frontend
 ├── .env.example
@@ -161,6 +162,12 @@ rate is measured, not assumed.
 | **M2** | `eval/` folder, 20 questions, `run_eval.py`, `results.md` | Script runs end-to-end and prints accuracy; results committed |
 | **M3** | Next.js UI: upload dropzone, document list, chat with citation chips, refusal styling | Full flow works in the browser against the local backend |
 | **M4** | `docker-compose.yml` for db + backend + frontend, README with setup, architecture diagram, eval results and demo GIF | `docker compose up` on a clean machine brings up the whole stack |
+
+M4 notes: the frontend image is a two-stage build using Next.js `output: "standalone"`. The browser
+calls the backend directly, so `NEXT_PUBLIC_API_URL` is a build argument (default
+`http://localhost:8000`) and is baked into the client bundle. Compose starts db, backend and frontend
+in order using health checks. The architecture diagram is Mermaid in the README so GitHub renders it
+without an image file. The demo GIF is assembled from Playwright screenshots with Pillow.
 
 ## 8. Out of scope (for now)
 

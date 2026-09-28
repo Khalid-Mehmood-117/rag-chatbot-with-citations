@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     top_k: int = 5
     similarity_threshold: float = 0.35
 
+    # Comma separated list of origins allowed to call the API from a browser.
+    cors_origins: str = "http://localhost:3000"
+
+    def cors_origin_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
     model_config = SettingsConfigDict(
         env_file=(REPO_ROOT / ".env", ".env"),
         env_file_encoding="utf-8",

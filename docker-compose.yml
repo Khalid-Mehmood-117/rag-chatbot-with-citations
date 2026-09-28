@@ -1,4 +1,5 @@
-# M1: database only. M4 adds the backend and frontend services.
+# Full stack: PostgreSQL with pgvector, the FastAPI backend and the Next.js frontend.
+# Copy .env.example to .env and set OPENAI_API_KEY, then run: docker compose up --build
 services:
   db:
     image: pgvector/pgvector:pg16
@@ -16,6 +17,39 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  backend:
+    build: ./backend
+    container_name: rag-backend
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      DATABASE_URL: postgresql+asyncpg://rag:rag@db:5432/rag
+      # Must match the URL the frontend is served from.
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # The browser calls the backend directly, so this must be reachable from the host.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    container_name: rag-frontend
+    ports:
+      # Change FRONTEND_PORT if 3000 is taken on your machine, and set CORS_ORIGINS to match.
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
 
 volumes:
   pgdata:

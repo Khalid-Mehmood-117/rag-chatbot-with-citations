@@ -72,5 +72,17 @@ Do this without being asked. A milestone is not complete until this is done.
 - Ops note: Docker Desktop failed to start mid-session because of stale Unix socket reparse points in
   the Docker run folder under %LOCALAPPDATA%. Fix that worked: quit Docker Desktop, rename the run
   folder, relaunch.
-- Next: M4 docker-compose for db + backend + frontend, README with setup, architecture diagram,
-  eval results, screenshots and demo GIF.
+- Done: M4 packaging and README (2026-09-28). docker-compose.yml runs db, backend and frontend with
+  health-checked startup order. frontend/Dockerfile is a two-stage standalone Next.js build with
+  NEXT_PUBLIC_API_URL as a build arg. FRONTEND_PORT and CORS_ORIGINS overrides for machines where 3000
+  is taken (backend CORS origins are now a setting). README has a Mermaid architecture diagram, quick
+  start, API examples with real JSON, citation and refusal design, eval results, screenshots and
+  docs/demo.gif (14 frames from Playwright, assembled with Pillow, 341 KB).
+- M4 verification: docker compose up --build built both images and started all three containers.
+  Through the containerized backend: upload returned 33 pages and 33 chunks, the vacation question
+  cited page 7, CORS preflight returned the frontend origin. The frontend container served the UI and
+  the full browser flow (upload, answer with citation, refusal) was recorded from it for the GIF.
+  On this machine port 3000 is held by a Grafana container from another project, so the frontend was
+  verified on FRONTEND_PORT=3001 with CORS_ORIGINS=http://localhost:3001. pytest: 27 passed.
+- All four milestones are complete. Possible follow-ups: harder eval paraphrases written by someone
+  other than the author, document deletion, per-document filtering in the UI, streaming answers.

@@ -87,3 +87,10 @@ def test_upload_returns_document_summary(client_factory, monkeypatch):
     response = client.post("/documents", files={"file": ("handbook.pdf", b"%PDF-1.4 fake", "application/pdf")})
     assert response.status_code == 201
     assert response.json() == {"id": str(doc_id), "name": "handbook.pdf", "pages": 3, "chunks": 7}
+
+
+def test_cors_origins_are_split_and_trimmed():
+    from app.config import Settings
+
+    settings = Settings(cors_origins="http://localhost:3000, http://localhost:3001 ,")
+    assert settings.cors_origin_list() == ["http://localhost:3000", "http://localhost:3001"]
